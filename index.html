@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Auditable deadline calculator for EMIR procedures." />
+  <title>EMIR Deadline Calculator</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand-mark">EC</div>
+      <div>
+        <p class="eyebrow">Regulatory workflows</p>
+        <h1>EMIR Deadline Calculator</h1>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="Deadline calculator">
+      <form class="controls" id="calculator-form">
+        <div class="control-heading">
+          <h2>Set up the procedure</h2>
+          <p>Dates update automatically.</p>
+        </div>
+
+        <label>
+          Procedure
+          <select id="procedure"></select>
+        </label>
+
+        <label>
+          Start date
+          <input id="start-date" type="date" required />
+          <span class="hint">The initial event date does not count as WD 1.</span>
+        </label>
+
+        <fieldset id="scenario-options">
+          <legend>Scenario</legend>
+        </fieldset>
+
+        <div class="holiday-control">
+          <label for="holiday-date">Excluded dates</label>
+          <div class="inline-input">
+            <input id="holiday-date" type="date" />
+            <button id="add-holiday" type="button" class="secondary">Add</button>
+          </div>
+          <div id="holiday-list" class="holiday-list" aria-live="polite"></div>
+          <span class="hint">Italian national public holidays for the selected year and the following year are preselected. Add local patron-saint days or other closures as needed.</span>
+        </div>
+
+        <button id="reset" type="button" class="text-button">Reset scenario</button>
+      </form>
+
+      <section class="results" aria-live="polite">
+        <div class="summary">
+          <div>
+            <p class="eyebrow">Estimated final deadline</p>
+            <p id="final-date" class="final-date">—</p>
+          </div>
+          <div class="summary-metric">
+            <strong id="total-wd">0</strong>
+            <span>working days</span>
+          </div>
+        </div>
+
+        <div class="notice">
+          <span aria-hidden="true">i</span>
+          <p><strong>Calculation assumption:</strong> stages are calculated sequentially and the calendar excludes weekends and Italian national public holidays. Verify triggers, overlaps and local holidays before using the dates operationally.</p>
+        </div>
+
+        <div class="timeline-heading">
+          <div>
+            <p class="eyebrow">Calculated workflow</p>
+            <h2 id="procedure-title"></h2>
+          </div>
+          <button id="copy-summary" type="button" class="secondary">Copy summary</button>
+        </div>
+        <ol id="timeline" class="timeline"></ol>
+      </section>
+    </section>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>
