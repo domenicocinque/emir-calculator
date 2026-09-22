@@ -41,6 +41,7 @@ const holidays = new Set();
 const customHolidays = new Set();
 const removedItalianHolidays = new Set();
 const holidayLabels = new Map();
+let phaseDurations = [];
 
 function isoLocal(date) {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
@@ -128,6 +129,16 @@ function addWorkingDays(date, count) {
   return cursor;
 }
 
+function workingDaysBetween(start, end) {
+  const cursor = new Date(start);
+  let count = 0;
+  while (cursor < end) {
+    cursor.setDate(cursor.getDate() + 1);
+    if (isWorkingDay(cursor)) count += 1;
+  }
+  return count;
+}
+
 function currentState() {
   return Object.fromEntries([...optionsBox.querySelectorAll("input[type=checkbox]")].map(input => [input.id, input.checked]));
 }
@@ -148,28 +159,40 @@ function calculate() {
   const proc = procedures[procedureSelect.value];
   const steps = proc.steps(currentState());
   let cursor = parseLocal(startInput.value);
-  const total = steps.reduce((sum, step) => sum + step.days, 0);
+  let total = 0;
 
   timeline.innerHTML = "";
-  steps.forEach((step) => {
+  steps.forEach((step, index) => {
     const start = new Date(cursor);
-    cursor = addWorkingDays(cursor, step.days);
+    const maximumDate = addWorkingDays(start, step.days);
+    const duration = Math.max(1, Math.min(phaseDurations[index] ?? step.days, step.days));
+    cursor = addWorkingDays(start, duration);
+    total += duration;
     const item = document.createElement("li");
     item.className = "step";
     item.innerHTML = `
-      <time class="step-date" datetime="${isoLocal(cursor)}">${formatDate(cursor)}</time>
+      <label class="step-date">
+        <span class="sr-only">Deadline for ${step.name}</span>
+        <input class="step-date-input" type="date" data-step-index="${index}"
+          value="${isoLocal(cursor)}" min="${isoLocal(addWorkingDays(start, 1))}"
+          max="${isoLocal(maximumDate)}" aria-label="Deadline for ${step.name}">
+      </label>
       <span class="step-dot" aria-hidden="true"></span>
       <div class="step-card">
         <strong>${step.name}</strong>
         <p>${step.owner} · From ${formatDate(start)}. ${step.detail}</p>
       </div>
-      <span class="step-duration">${step.days} WD</span>`;
+      <span class="step-duration${duration < step.days ? " shortened" : ""}" title="Maximum ${step.days} working days">${duration < step.days ? `${duration} / ${step.days}` : step.days} WD</span>`;
     timeline.appendChild(item);
   });
 
   el("final-date").textContent = formatDate(cursor, true);
   el("total-wd").textContent = total;
   el("procedure-title").textContent = proc.title;
+}
+
+function resetPhaseDurations() {
+  phaseDurations = [];
 }
 
 function renderHolidays() {
@@ -199,9 +222,44 @@ refreshHolidays();
 renderHolidays();
 calculate();
 
-procedureSelect.addEventListener("change", () => { renderOptions(); calculate(); });
-optionsBox.addEventListener("change", calculate);
+procedureSelect.addEventListener("change", () => { resetPhaseDurations(); renderOptions(); calculate(); });
+optionsBox.addEventListener("change", () => { resetPhaseDurations(); calculate(); });
 startInput.addEventListener("change", () => { refreshHolidays(); renderHolidays(); calculate(); });
+
+timeline.addEventListener("change", (event) => {
+  const input = event.target.closest(".step-date-input");
+  if (!input) return;
+
+  const index = Number(input.dataset.stepIndex);
+  const previousValue = index === 0
+    ? startInput.value
+    : timeline.querySelector(`[data-step-index="${index - 1}"]`).value;
+  if (!input.value) {
+    showToast("Choose a deadline date");
+    calculate();
+    return;
+  }
+
+  const previousDate = parseLocal(previousValue);
+  const selectedDate = parseLocal(input.value);
+  const maximumDays = procedures[procedureSelect.value].steps(currentState())[index].days;
+
+  if (selectedDate <= previousDate || !isWorkingDay(selectedDate)) {
+    showToast("Choose a working day after the previous phase");
+    calculate();
+    return;
+  }
+
+  const duration = workingDaysBetween(previousDate, selectedDate);
+  if (duration > maximumDays) {
+    showToast(`This phase cannot exceed ${maximumDays} working days`);
+    calculate();
+    return;
+  }
+
+  phaseDurations[index] = duration;
+  calculate();
+});
 
 el("add-holiday").addEventListener("click", () => {
   const value = el("holiday-date").value;
@@ -231,6 +289,7 @@ el("reset").addEventListener("click", () => {
   refreshHolidays();
   renderHolidays();
   renderOptions();
+  resetPhaseDurations();
   calculate();
 });
 
@@ -238,7 +297,7 @@ el("copy-summary").addEventListener("click", async () => {
   const proc = procedures[procedureSelect.value];
   const rows = [...timeline.querySelectorAll(".step")].map(step => {
     const name = step.querySelector("strong").textContent;
-    const date = step.querySelector("time").textContent;
+    const date = formatDate(parseLocal(step.querySelector(".step-date-input").value));
     const duration = step.querySelector(".step-duration").textContent;
     return `- ${name}: ${date} (${duration})`;
   });

@@ -14,6 +14,18 @@
 
 * { box-sizing: border-box; }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -168,16 +180,33 @@ legend { margin-bottom: 10px; }
 
 .timeline-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 17px; }
 .timeline-heading h2 { max-width: 700px; font-size: 1.1rem; line-height: 1.35; }
+.timeline-help { max-width: 680px; margin-top: 5px; color: var(--muted); font-size: .78rem; line-height: 1.4; }
 
 .timeline { list-style: none; padding: 0; margin: 0; }
 .step { position: relative; display: grid; grid-template-columns: 108px 20px 1fr auto; gap: 15px; min-height: 105px; }
 .step:not(:last-child)::after { content: ""; position: absolute; left: 132px; top: 31px; bottom: -4px; width: 2px; background: #d5e1e6; }
-.step-date { padding-top: 14px; text-align: right; color: var(--muted); font-size: .82rem; font-weight: 700; }
+.step-date { padding-top: 8px; }
+.step-date .step-date-input {
+  width: 108px;
+  min-height: 36px;
+  margin: 0;
+  padding: 6px 7px;
+  border: 1px solid #d3dde3;
+  border-radius: 7px;
+  color: var(--muted);
+  background: white;
+  font-size: .72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.step-date-input:hover { border-color: #c5d0d8; background: var(--wash); }
+.step-date-input:focus { border-color: var(--blue); background: white; }
 .step-dot { position: relative; z-index: 1; width: 14px; height: 14px; margin-top: 17px; border: 3px solid white; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 2px var(--blue); }
 .step-card { margin-bottom: 12px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 10px; background: white; }
 .step-card strong { display: block; margin-bottom: 5px; font-size: .95rem; }
 .step-card p { color: var(--muted); font-size: .8rem; line-height: 1.45; }
 .step-duration { align-self: start; margin-top: 10px; padding: 6px 9px; border-radius: 6px; color: var(--navy); background: #e6f1f5; font-size: .78rem; font-weight: 800; white-space: nowrap; }
+.step-duration.shortened { color: #78520c; background: #fff2d3; }
 
 .toast { position: fixed; right: 24px; bottom: 24px; padding: 11px 15px; border-radius: 8px; color: white; background: var(--navy); box-shadow: 0 8px 30px rgba(0,0,0,.2); font-weight: 700; }
 
@@ -194,5 +223,5 @@ legend { margin-bottom: 10px; }
   .step { grid-template-columns: 78px 15px 1fr; gap: 10px; }
   .step-duration { grid-column: 3; margin: -20px 0 20px; justify-self: end; }
   .step:not(:last-child)::after { left: 94px; }
-  .step-date { font-size: .74rem; }
+  .step-date .step-date-input { width: 78px; padding-inline: 3px; font-size: .62rem; }
 }
